@@ -4,14 +4,14 @@
 
 ## Структура проєкту
 ```text
-lesson-5/
-├── main.tf                  # Головний файл для підключення модулів
-├── backend.tf               # Налаштування бекенду для стейтів (S3 + DynamoDB)
-├── outputs.tf               # Загальне виведення ресурсів
+lesson-5-terraform
 ├── modules/                 # Каталог з усіма модулями
-│   ├── s3-backend/          # Модуль для S3 та DynamoDB
-│   ├── vpc/                 # Модуль для VPC
-│   └── ecr/                 # Модуль для ECR
+│   ├── ecr/                 # Модуль ECR: ecr.tf, outputs.tf, variables.tf
+│   ├── s3-backend/          # Модуль S3/DynamoDB: dynamodb.tf, outputs.tf, s3.tf, variables.tf
+│   └── vpc/                 # Модуль VPC: outputs.tf, routes.tf, subnets.tf, variables.tf, vpc.tf
+├── backend.tf               # Налаштування бекенду (S3 + DynamoDB)
+├── main.tf                  # Головний файл для підключення модулів
+├── outputs.tf               # Загальне виведення ресурсів
 └── README.md                # Документація проєкту
 ```
 ## Опис модулів
