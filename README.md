@@ -61,7 +61,7 @@ aws eks update-kubeconfig --region us-east-1 --name django-eks-cluster
 Застосування створених маніфестів (Deployment, Service, ConfigMap, HPA) у кластер:
 
 ```bash
-kubectl apply -f ./charts/django-app/templates
+helm install django-release ./charts/django-app
 ```
 ## Результати виконання та перевірка
 Перевірка статусу сервісів та отримання публічної адреси додатка:
