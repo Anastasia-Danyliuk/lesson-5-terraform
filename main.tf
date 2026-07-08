@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-west-2"
+  region = "us-east-1"
 }
 
 module "s3_backend" {
@@ -22,7 +22,7 @@ module "vpc" {
   vpc_cidr_block     = "10.0.0.0/16"
   public_subnets     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
   private_subnets    = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
-  availability_zones = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
   vpc_name           = "lesson-5-vpc"
 }
 
@@ -31,3 +31,8 @@ module "ecr" {
    repository_name = "lesson-5-ecr"
    scan_on_push = true
  }
+
+module "eks" {
+  source     = "./modules/eks"
+  subnet_ids = module.vpc.public_subnets
+}
