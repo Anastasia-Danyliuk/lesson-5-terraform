@@ -1,29 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: django-deployment
+  name: {{ .Release.Name }}-deployment
 spec:
-  replicas: 2
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: django
+      app: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: django
+        app: {{ .Release.Name }}
     spec:
       containers:
         - name: django-container
-          image: "228266398439.dkr.ecr.us-east-1.amazonaws.com/lesson-5-ecr:latest"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: 80
+            - containerPort: {{ .Values.service.targetPort }}
           envFrom:
             - configMapRef:
-                name: django-config
+                name: {{ .Release.Name }}-config
           resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "200m"
-              memory: "256Mi"
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}

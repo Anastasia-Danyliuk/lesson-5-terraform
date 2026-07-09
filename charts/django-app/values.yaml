@@ -1,9 +1,48 @@
 replicaCount: 2
 
 image:
-  repository: 228266398439.dkr.ecr.us-east-1.amazonaws.com/lesson-5-ecr
+  repository: "228266398439.dkr.ecr.us-east-1.amazonaws.com/lesson-5-ecr"
   tag: "latest"
+  pullPolicy: IfNotPresent
 
 service:
   type: LoadBalancer
   port: 80
+  targetPort: 8000
+
+config:
+  DEBUG: "True"
+  ALLOWED_HOSTS: "*"
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: "django_user"
+  POSTGRES_PASSWORD: "securepassword123"
+  POSTGRES_DB: "django_db"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /health/
+    port: 8000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /health/
+    port: 8000
+  initialDelaySeconds: 15
+  periodSeconds: 10

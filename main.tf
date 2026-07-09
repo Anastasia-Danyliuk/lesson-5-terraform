@@ -34,5 +34,5 @@ module "ecr" {
 
 module "eks" {
   source     = "./modules/eks"
-  subnet_ids = module.vpc.public_subnets
+  subnet_ids = module.vpc.private_subnets
 }
