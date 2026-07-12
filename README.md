@@ -1,26 +1,64 @@
 ##  Структура проєкту
 ```text
-lesson-7/
+Progect/
 │
-├── main.tf                  # Головний файл для підключення модулів інфраструктури
-├── backend.tf               # Налаштування бекенду для стейтів (S3 + DynamoDB)
+├── main.tf                  # Головний файл для підключення модулів
+├── backend.tf               # Налаштування бекенду для стейтів (S3 + DynamoDB
 ├── outputs.tf               # Загальні виводи ресурсів
 │
-├── modules/                 # Каталог з інфраструктурними модулями Terraform
-│   ├── s3-backend/          # Модуль для S3 бакета та DynamoDB (State Lock)
-│   ├── vpc/                 # Модуль для мережі (VPC, підмережі, маршрутизація, NAT)
-│   ├── ecr/                 # Модуль для Amazon Elastic Container Registry
-│   └── eks/                 # Модуль для Amazon EKS (Kubernetes кластер)
-│
-└── charts/                  # Каталог для Helm-чартів
-    └── django-app/          # Helm-чарт для нашого застосунку
-        ├── templates/       # Маніфести Kubernetes
-        │   ├── deployment.yaml
-        │   ├── service.yaml
-        │   ├── configmap.yaml
-        │   └── hpa.yaml
-        ├── Chart.yaml       # Метадані чарту
-        └── values.yaml      # Конфігураційні параметри чарту
+├── modules/                 # Каталог з усіма модулями
+│   ├── s3-backend/          # Модуль для S3 та DynamoDB
+│   │   ├── s3.tf            # Створення S3-бакета
+│   │   ├── dynamodb.tf      # Створення DynamoDB
+│   │   ├── variables.tf     # Змінні для S3
+│   │   └── outputs.tf       # Виведення інформації про S3 та DynamoDB
+│   │
+│   ├── vpc/                 # Модуль для VPC
+│   │   ├── vpc.tf           # Створення VPC, підмереж, Internet Gateway
+│   │   ├── routes.tf        # Налаштування маршрутизації
+│   │   ├── variables.tf     # Змінні для VPC
+│   │   └── outputs.tf  
+│   ├── ecr/                 # Модуль для ECR
+│   │   ├── ecr.tf           # Створення ECR репозиторію
+│   │   ├── variables.tf     # Змінні для ECR
+│   │   └── outputs.tf       # Виведення URL репозиторію
+│   │
+│   ├── eks/                      # Модуль для Kubernetes кластера
+│   │   ├── eks.tf                # Створення кластера
+│   │   ├── aws_ebs_csi_driver.tf # Встановлення плагіну csi drive
+│   │   ├── variables.tf     # Змінні для EKS
+│   │   └── outputs.tf       # Виведення інформації про кластер
+│   │
+│   ├── jenkins/             # Модуль для Helm-установки Jenkins
+│   │   ├── jenkins.tf       # Helm release для Jenkins
+│   │   ├── variables.tf     # Змінні (ресурси, креденшели, values)
+│   │   ├── providers.tf     # Оголошення провайдерів
+│   │   ├── values.yaml      # Конфігурація jenkins
+│   │   └── outputs.tf       # Виводи (URL, пароль адміністратора)
+│   │ 
+│   └── argo_cd/             # Новий модуль для Helm-установки Argo CD
+│       ├── jenkins.tf       # Helm release для Jenkins
+│       ├── variables.tf     # Змінні (версія чарта, namespace, repo URL тощо)
+│       ├── providers.tf     # Kubernetes+Helm.  переносимо з модуля jenkins
+│       ├── values.yaml      # Кастомна конфігурація Argo CD
+│       ├── outputs.tf       # Виводи (hostname, initial admin password)
+│		    └──charts/                  # Helm-чарт для створення app'ів
+│ 	 	    ├── Chart.yaml
+│	  	    ├── values.yaml          # Список applications, repositories
+│			    └── templates/
+│		        ├── application.yaml
+│		        └── repository.yaml
+├── charts/
+│   └── django-app/
+│       ├── templates/
+│       │   ├── deployment.yaml
+│       │   ├── service.yaml
+│       │   ├── configmap.yaml
+│       │   └── hpa.yaml
+│       ├── Chart.yaml
+│       └── values.yaml     # ConfigMap зі змінними середовища
+
+
 ```
 ## Інструкція з розгортання та запуску команд
 Ініціалізація проєкту, перевірка плану та створення всіх ресурсів в AWS (VPC, ECR, EKS):
@@ -30,46 +68,23 @@ terraform init
 terraform plan
 terraform apply -auto-approve
 ```
-Авторизація в AWS ECR та робота з Docker
-Отримання свіжого токена авторизації та логін у Docker-демон прямо через консоль:
+## Схема CI/CD процесу
+1. **CI (Jenkins):**  Jenkins за допомогою Kubernetes-агента (Kaniko + Git) збирає Docker-образ, пушить його в ECR та оновлює тег у `values.yaml` Helm-чарта.
+2. **CD (Argo CD):** Argo CD відстежує репозиторій. При оновленні файлу в Git, Argo CD автоматично підхоплює зміни та синхронізує стан кластера Kubernetes (GitOps).
 
-```bash
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 228266398439.dkr.ecr.us-east-1.amazonaws.com
-```
-Збірка локального Docker-образу (використано полегшений Nginx-сервер як вебзаглушку додатка):
+## Як перевірити роботу Jenkins
+1. Переконайтеся, що поди Jenkins працюють: `kubectl get pods -n jenkins`.
+2. Виконайте `port-forward` для доступу до панелі:
+   `kubectl port-forward svc/jenkins 8080:8080 -n jenkins`
+3. У Jenkins Pipeline перевірте історію виконання для вашої гілки. Логи пайплайну покажуть процес збірки через Kaniko та оновлення Git.
 
-```bash
-docker build -t django-app .
-```
-Створення тегу для зв'язку локального образу з віддаленим репозиторієм в AWS:
+## Як побачити результат в Argo CD
+1. Виконайте прокидання порту:
+   `kubectl port-forward svc/argo-cd-server -n argocd 8080:443`
+2. Відкрийте в браузері `https://localhost:8080`.
+3. У списку додатків оберіть `django-app`. Статус **Healthy** та **Synced** підтверджує успішну роботу GitOps-конвеєра.
 
-```bash
-docker tag django-app:latest [228266398439.dkr.ecr.us-east-1.amazonaws.com/lesson-5-ecr:latest](https://228266398439.dkr.ecr.us-east-1.amazonaws.com/lesson-5-ecr:latest)
-```
-Пуш образу в хмару AWS ECR:
-```bash
-docker push [228266398439.dkr.ecr.us-east-1.amazonaws.com/lesson-5-ecr:latest](https://228266398439.dkr.ecr.us-east-1.amazonaws.com/lesson-5-ecr:latest)
-```
+<img width="1280" height="651" alt="photo_2026-07-12_19-14-51" src="https://github.com/user-attachments/assets/cdb728d6-96f1-4145-82df-805b4ebea8da" />
 
-## Налаштування доступу до Kubernetes кластера
-Оновлення локального конфігу kubeconfig для підключення утиліти kubectl до створеного в AWS кластера EKS:
+<img width="1183" height="569" alt="photo_2026-07-12_19-16-51" src="https://github.com/user-attachments/assets/4e8ca819-ddfb-4b97-a068-97d17159462a" />
 
-```bash
-aws eks update-kubeconfig --region us-east-1 --name django-eks-cluster
-```
-## Деплой застосунку в кластер
-Застосування створених маніфестів (Deployment, Service, ConfigMap, HPA) у кластер:
-
-```bash
-helm install django-release ./charts/django-app
-```
-## Результати виконання та перевірка
-Перевірка статусу сервісів та отримання публічної адреси додатка:
-
-```bash
-kubectl get svc
-```
-AWS LoadBalancer URL:
-http://add2b9e551914467da4b0bab597e2e9e-2118668214.us-east-1.elb.amazonaws.com
-
-<img width="1280" height="435" alt="screeen8" src="https://github.com/user-attachments/assets/44f2a103-92cf-4915-8724-35c8db66a24c" />
