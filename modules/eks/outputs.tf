@@ -1,14 +1,14 @@
-output "cluster_id" {
-  description = "The name/id of the EKS cluster"
-  value       = aws_eks_cluster.this.id
+output "cluster_name" {
+  value       = aws_eks_cluster.main.name
+  description = "The name of the EKS cluster"
 }
 
 output "cluster_endpoint" {
-  description = "The endpoint for your EKS cluster API Server"
-  value       = aws_eks_cluster.this.endpoint
+  value       = aws_eks_cluster.main.endpoint
+  description = "The endpoint for the EKS cluster"
 }
 
-output "cluster_security_group_id" {
-  description = "Security group ID attached to the EKS cluster"
-  value       = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+output "cluster_certificate_authority_data" {
+  value       = aws_eks_cluster.main.certificate_authority[0].data
+  description = "The base64 encoded certificate data required to communicate with the cluster"
 }

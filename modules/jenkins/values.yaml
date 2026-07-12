@@ -1,0 +1,5 @@
+controller:
+  serviceType: ClusterIP
+
+  persistence:
+    enabled: false

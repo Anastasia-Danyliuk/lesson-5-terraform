@@ -11,6 +11,24 @@ provider "aws" {
   region = "us-east-1"
 }
 
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_name
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+}
+
+provider "helm" {
+  kubernetes = {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+    token                  = data.aws_eks_cluster_auth.cluster.token
+  }
+}
+
 module "s3_backend" {
   source      = "./modules/s3-backend"
   bucket_name = "terraform-state-nasti-8421"
@@ -30,9 +48,37 @@ module "ecr" {
    source          = "./modules/ecr"
    repository_name = "lesson-5-ecr"
    scan_on_push = true
- }
+}
 
 module "eks" {
   source     = "./modules/eks"
   subnet_ids = module.vpc.private_subnets
 }
+
+module "argo_cd" {
+  source                 = "./modules/argo_cd"
+  cluster_name           = module.eks.cluster_name
+  cluster_endpoint       = module.eks.cluster_endpoint
+  cluster_ca_certificate = module.eks.cluster_certificate_authority_data
+
+  providers = {
+    kubernetes = kubernetes
+    helm       = helm
+  }
+
+  depends_on = [module.eks]
+}
+
+# module "jenkins" {
+#   source                 = "./modules/jenkins"
+#   cluster_name           = module.eks.cluster_name
+#   cluster_endpoint       = module.eks.cluster_endpoint
+#   cluster_ca_certificate = module.eks.cluster_certificate_authority_data
+#
+#   providers = {
+#     kubernetes = kubernetes
+#     helm       = helm
+#   }
+#
+#   depends_on = [module.eks]
+# }

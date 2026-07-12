@@ -54,7 +54,7 @@ resource "aws_eks_node_group" "nodes" {
     min_size     = 1
   }
 
-  instance_types = ["t3.micro"]
+  instance_types = ["t3.small"]
 
   depends_on = [
     aws_iam_role_policy_attachment.eks_worker_node,
@@ -62,3 +62,28 @@ resource "aws_eks_node_group" "nodes" {
     aws_iam_role_policy_attachment.ecr_readonly,
   ]
 }
+
+# resource "aws_iam_role_policy_attachment" "eks_ebs_csi" {
+#   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+#   role       = aws_iam_role.eks_nodes_role.name
+# }
+#
+#
+#
+# resource "aws_eks_addon" "ebs_csi" {
+#   cluster_name = aws_eks_cluster.main.name
+#   addon_name   = "aws-ebs-csi-driver"
+#
+#   configuration_values = jsonencode({
+#     controller = {
+#       nodeSelector = {}
+#     }
+#   })
+#
+#   resolve_conflicts_on_create = "OVERWRITE"
+#   resolve_conflicts_on_update = "OVERWRITE"
+#
+#   depends_on = [
+#     aws_eks_node_group.nodes,
+#     aws_iam_role_policy_attachment.eks_ebs_csi
+#   ]
