@@ -1,0 +1,21 @@
+grafana:
+  fullnameOverride: grafana
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: true
+    size: 5Gi
+
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+alertmanager:
+  enabled: true

@@ -1,40 +1,58 @@
-# Домашнє завдання: Jenkins, Argo CD, Helm і Terraform
+# Фінальний DevOps-проєкт на AWS
 
-У цьому проєкті я зробила CI/CD для простого Django-застосунку.
+Це мій фінальний навчальний проєкт. У ньому я зібрала інфраструктуру AWS за допомогою Terraform і налаштувала простий CI/CD для Django-застосунку.
 
-Terraform створює інфраструктуру в AWS і встановлює Jenkins та Argo CD через Helm. Jenkins збирає Docker-образ, завантажує його в Amazon ECR та змінює тег образу у `values.yaml`. Після цього Argo CD бачить зміну в GitHub і оновлює застосунок у Kubernetes.
+## Що є у проєкті
 
-## Як це працює
+- VPC з public і private subnet;
+- EKS кластер;
+- ECR для Docker-образів;
+- PostgreSQL у RDS;
+- Jenkins для збірки Docker-образу;
+- Argo CD для автоматичного оновлення застосунку;
+- Prometheus і Grafana для моніторингу;
+- Helm chart для Django;
+- HPA для автомасштабування Django pods;
+- S3 і DynamoDB для Terraform state.
+
+Я вибрала звичайний PostgreSQL RDS, а не Aurora, тому що для навчального проєкту він простіший і дешевший.
+
+## Як працює CI/CD
 
 ```text
-Зміни в GitHub
-      ↓
-Jenkins запускає pipeline
-      ↓
+Я пушу зміни в GitHub
+          ↓
+Jenkins запускає Jenkinsfile
+          ↓
 Kaniko збирає Docker-образ
-      ↓
-Образ завантажується в Amazon ECR
-      ↓
+          ↓
+Образ завантажується в ECR
+          ↓
 Jenkins змінює image.tag у values.yaml
-      ↓
+          ↓
 Argo CD бачить зміну в GitHub
-      ↓
-Застосунок оновлюється в EKS
+          ↓
+Django оновлюється в EKS
 ```
 
-## Що є в проєкті
+## Головні папки
 
-- простий Django-застосунок;
-- Dockerfile;
-- Terraform-модулі для VPC, ECR, EKS, Jenkins та Argo CD;
-- Jenkinsfile з Kaniko та Git;
-- Helm chart для Django-застосунку;
-- Argo CD Application з автоматичною синхронізацією;
-- окремий Terraform-каталог `bootstrap` для S3 і DynamoDB.
+```text
+modules/vpc          - мережа AWS
+modules/eks          - Kubernetes кластер і EBS CSI driver
+modules/ecr          - Docker registry
+modules/rds          - PostgreSQL база даних
+modules/jenkins      - Jenkins через Helm
+modules/argo_cd      - Argo CD через Helm
+modules/monitoring   - Prometheus і Grafana
+charts/django-app    - Helm chart застосунку
+bootstrap            - S3 і DynamoDB для Terraform state
+config               - простий Django-застосунок
+```
 
-## Що потрібно встановити
+## Що потрібно перед запуском
 
-Перед запуском потрібні:
+Потрібно встановити:
 
 - AWS CLI;
 - Terraform;
@@ -42,38 +60,54 @@ Argo CD бачить зміну в GitHub
 - Helm;
 - Git.
 
-Також потрібен AWS-акаунт і GitHub token із правом запису в репозиторій.
+Також потрібно налаштувати AWS CLI:
 
-## 1. Створення S3 і DynamoDB для Terraform state
+```bash
+aws configure
+```
 
-Спочатку потрібно створити backend для Terraform:
+## 1. Створення гілки для здачі
+
+Фінальний проєкт потрібно здавати у гілці `final-project`:
+
+```bash
+git switch -c final-project
+```
+
+Якщо гілка вже існує:
+
+```bash
+git switch final-project
+```
+
+## 2. Створення backend
+
+S3 і DynamoDB створюються окремо, тому що вони зберігають Terraform state:
 
 ```bash
 terraform -chdir=bootstrap init
 terraform -chdir=bootstrap apply
 ```
 
-S3 зберігає Terraform state, а DynamoDB використовується для блокування state.
+## 3. Налаштування змінних
 
-## 2. Налаштування змінних
-
-Потрібно зробити копію файлу `terraform.tfvars.example`:
+Створюю локальний файл зі змінними:
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars
 ```
 
-У файлі `terraform.tfvars` потрібно вказати свої дані:
+У `terraform.tfvars` потрібно замінити тестові значення на свої:
 
-- `github_token`;
-- `jenkins_aws_access_key_id`;
-- `jenkins_aws_secret_access_key`.
+- GitHub token;
+- AWS access key і secret key для Jenkins;
+- пароль RDS;
+- Django secret key;
+- пароль Grafana.
 
-Цей файл доданий у `.gitignore`, тому секрети не повинні потрапити в GitHub.
+Файл `terraform.tfvars` не потрапляє в GitHub, бо він доданий у `.gitignore`.
 
-## 3. Запуск Terraform
-
-Для перевірки та створення інфраструктури я використовую такі команди:
+## 4. Перевірка і запуск Terraform
 
 ```bash
 terraform init -reconfigure
@@ -83,130 +117,138 @@ terraform plan
 terraform apply
 ```
 
-Після створення EKS потрібно підключити kubectl до кластера:
+Створення EKS і RDS може зайняти приблизно 15–30 хвилин.
+
+Після створення кластера підключаю kubectl:
 
 ```bash
-aws eks update-kubeconfig --region us-east-1 --name django-eks-cluster
+aws eks update-kubeconfig --region us-east-1 --name final-project-eks-cluster
 kubectl get nodes
 ```
 
-Перевірка Jenkins та Argo CD:
+## 5. Перевірка всіх компонентів
 
 ```bash
-kubectl get pods -n jenkins
-kubectl get pods -n argocd
+kubectl get all -n jenkins
+kubectl get all -n argocd
+kubectl get all -n monitoring
+kubectl get all -n django-app
 ```
 
-## 4. Як перевірити Jenkins
+Також можна перевірити RDS:
 
-Щоб отримати пароль Jenkins:
+```bash
+terraform output rds_endpoint
+```
+
+## 6. Перевірка Jenkins
+
+Отримую пароль Jenkins:
 
 ```bash
 kubectl get secret -n jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode
 ```
 
-Щоб відкрити Jenkins локально:
+Відкриваю Jenkins через port-forward:
 
 ```bash
-kubectl port-forward -n jenkins svc/jenkins 8080:8080
+kubectl port-forward svc/jenkins 8080:8080 -n jenkins
 ```
 
-Після цього Jenkins буде доступний за адресою:
+Адреса: `http://localhost:8080`
 
-```text
-http://localhost:8080
-```
+У Jenkins потрібно створити Pipeline job:
 
-У Jenkins потрібно створити Pipeline job і вибрати **Pipeline script from SCM**.
+- Pipeline script from SCM;
+- SCM: Git;
+- Repository URL: `https://github.com/Anastasia-Danyliuk/lesson-5-terraform.git`;
+- Branch: `*/final-project`;
+- Script Path: `Jenkinsfile`.
 
-Налаштування job:
+Після **Build Now** Jenkins повинен зібрати образ, відправити його в ECR і змінити тег у `charts/django-app/values.yaml`.
 
-- SCM — Git;
-- Repository URL — `https://github.com/Anastasia-Danyliuk/lesson-5-terraform.git`;
-- Branch — `*/lesson-8-9`;
-- Script Path — `Jenkinsfile`.
-
-Після натискання **Build Now** pipeline повинен:
-
-1. Перевірити потрібні файли.
-2. Зібрати Docker-образ через Kaniko.
-3. Завантажити образ в Amazon ECR.
-4. Змінити тег образу в `charts/django-app/values.yaml`.
-5. Запушити зміну в гілку `lesson-8-9`.
-
-Перевірити образ в ECR можна командою:
+## 7. Перевірка Argo CD
 
 ```bash
-aws ecr describe-images --region us-east-1 --repository-name lesson-5-ecr
+kubectl port-forward svc/argocd-server 8081:443 -n argocd
 ```
 
-## 5. Як перевірити Argo CD
+Адреса: `https://localhost:8081`
 
-Перевірити Application можна командами:
+Логін: `admin`
 
-```bash
-kubectl get applications -n argocd
-kubectl get application django-app -n argocd
-```
-
-Щоб відкрити Argo CD локально:
-
-```bash
-kubectl port-forward -n argocd svc/argo-cd-server 8081:443
-```
-
-Argo CD буде доступний за адресою:
-
-```text
-https://localhost:8081
-```
-
-Логін — `admin`.
-
-Пароль можна отримати так:
+Пароль:
 
 ```bash
 kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode
 ```
 
-У вебінтерфейсі застосунок `django-app` повинен мати статуси **Synced** і **Healthy**.
+Застосунок `django-app` повинен мати статуси **Synced** і **Healthy**.
 
-Також результат можна перевірити через kubectl:
+Перевірка через kubectl:
 
 ```bash
+kubectl get application django-app -n argocd
 kubectl get pods -n django-app
 kubectl get svc -n django-app
 kubectl get hpa -n django-app
 ```
 
-Для перевірки самого застосунку можна відкрити адресу LoadBalancer. Endpoint `/health/` повинен повернути:
+Endpoint `/health/` перевіряє Django, а `/ready/` також перевіряє підключення до RDS.
 
-```json
-{"status": "healthy"}
-```
+## 8. Перевірка Grafana і Prometheus
 
-## Локальна перевірка Helm chart
+Відкриваю Grafana:
 
 ```bash
+kubectl port-forward svc/grafana 3000:80 -n monitoring
+```
+
+Адреса: `http://localhost:3000`
+
+Логін: `admin`. Пароль — значення `grafana_admin_password` із локального `terraform.tfvars`.
+
+У Grafana можна відкрити готові Kubernetes dashboards і подивитися CPU, пам'ять, pods та nodes.
+
+Перевірка Prometheus:
+
+```bash
+kubectl get pods -n monitoring
+kubectl get prometheus -n monitoring
+```
+
+## Локальна перевірка Django і Helm
+
+```bash
+docker compose up --build
 helm lint charts/django-app
 helm template django-app charts/django-app
-helm lint modules/argo_cd/charts
 ```
+
+Локальний Django буде доступний за адресою `http://localhost:8000`.
+
+## Як запушити фінальний проєкт
+
+```bash
+git add .
+git commit -m "Final DevOps project"
+git push -u origin final-project
+```
+
+Для здачі потрібно дати посилання саме на гілку `final-project` і зробити zip-архів з назвою `final_DevOps_ПІБ.zip`.
 
 ## Видалення ресурсів
 
-AWS-ресурси можуть коштувати гроші, тому після перевірки їх потрібно видалити.
-
-Спочатку видаляється основна інфраструктура:
+AWS-ресурси можуть коштувати гроші. Після перевірки спочатку видаляю основну інфраструктуру:
 
 ```bash
 terraform destroy
 ```
 
-Після цього можна видалити S3 та DynamoDB:
+І тільки після цього видаляю backend:
 
 ```bash
 terraform -chdir=bootstrap destroy
 ```
 
-Backend потрібно видаляти останнім, тому що в ньому зберігається Terraform state.
+S3 і DynamoDB потрібно видаляти останніми, тому що там зберігається Terraform state.

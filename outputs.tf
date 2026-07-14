@@ -17,3 +17,16 @@ output "jenkins_namespace" {
 output "argocd_namespace" {
   value = module.argo_cd.argocd_namespace
 }
+
+output "rds_endpoint" {
+  value     = module.rds.endpoint
+  sensitive = true
+}
+
+output "monitoring_namespace" {
+  value = module.monitoring.namespace
+}
+
+output "grafana_service" {
+  value = module.monitoring.grafana_service
+}

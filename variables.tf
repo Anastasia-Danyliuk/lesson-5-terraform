@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "cluster_name" {
   type        = string
   description = "EKS cluster name."
-  default     = "django-eks-cluster"
+  default     = "final-project-eks-cluster"
 }
 
 variable "ecr_repository_name" {
@@ -25,7 +25,37 @@ variable "git_repository_url" {
 variable "git_revision" {
   type        = string
   description = "Git branch watched by Argo CD and updated by Jenkins."
-  default     = "lesson-8-9"
+  default     = "final-project"
+}
+
+variable "db_name" {
+  type        = string
+  description = "PostgreSQL database name"
+  default     = "django_db"
+}
+
+variable "db_username" {
+  type        = string
+  description = "PostgreSQL administrator username"
+  default     = "django_user"
+}
+
+variable "db_password" {
+  type        = string
+  description = "PostgreSQL administrator password"
+  sensitive   = true
+}
+
+variable "django_secret_key" {
+  type        = string
+  description = "Secret key used by Django"
+  sensitive   = true
+}
+
+variable "grafana_admin_password" {
+  type        = string
+  description = "Grafana admin password"
+  sensitive   = true
 }
 
 variable "jenkins_aws_access_key_id" {

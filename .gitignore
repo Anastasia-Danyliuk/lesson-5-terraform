@@ -8,3 +8,9 @@ terraform.tfvars
 __pycache__/
 *.py[cod]
 .helm-tmp/
+.helm-final-check/
+.aws-local/
+.terraform-tmp/
+.terraform-plugin-cache/
+bootstrap/*.tfplan
+.kube-local/

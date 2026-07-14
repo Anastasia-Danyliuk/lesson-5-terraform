@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.urls import path
+from django.db import connection
 
 
 def index(_request):
@@ -10,4 +11,12 @@ def health(_request):
     return JsonResponse({"status": "healthy"})
 
 
-urlpatterns = [path("", index), path("health/", health)]
+def ready(_request):
+    try:
+        connection.ensure_connection()
+        return JsonResponse({"status": "ready", "database": "connected"})
+    except Exception:
+        return JsonResponse({"status": "not ready", "database": "error"}, status=503)
+
+
+urlpatterns = [path("", index), path("health/", health), path("ready/", ready)]

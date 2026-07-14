@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/Anastasia-Danyliuk/lesson-5-terraform.git
-    targetRevision: lesson-8-9
+    targetRevision: final-project
     path: charts/django-app
   destination:
     server: https://kubernetes.default.svc

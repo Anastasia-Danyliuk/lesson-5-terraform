@@ -3,6 +3,6 @@ repository:
 
 application:
   name: django-app
-  revision: lesson-8-9
+  revision: final-project
   path: charts/django-app
   namespace: django-app

@@ -59,6 +59,59 @@ module "eks" {
   subnet_ids   = module.vpc.private_subnets
 }
 
+resource "kubernetes_storage_class_v1" "ebs_gp3" {
+  metadata {
+    name = "ebs-gp3"
+    annotations = {
+      "storageclass.kubernetes.io/is-default-class" = "true"
+    }
+  }
+
+  storage_provisioner    = "ebs.csi.aws.com"
+  volume_binding_mode    = "WaitForFirstConsumer"
+  allow_volume_expansion = true
+
+  parameters = {
+    type = "gp3"
+  }
+
+  depends_on = [module.eks]
+}
+
+module "rds" {
+  source       = "./modules/rds"
+  vpc_id       = module.vpc.vpc_id
+  subnet_ids   = module.vpc.private_subnets
+  allowed_cidr = "10.0.0.0/16"
+  db_name      = var.db_name
+  db_username  = var.db_username
+  db_password  = var.db_password
+}
+
+resource "kubernetes_namespace_v1" "django_app" {
+  metadata { name = "django-app" }
+
+  depends_on = [module.eks]
+}
+
+resource "kubernetes_secret_v1" "django_database" {
+  metadata {
+    name      = "django-database"
+    namespace = kubernetes_namespace_v1.django_app.metadata[0].name
+  }
+
+  data = {
+    DJANGO_SECRET_KEY = var.django_secret_key
+    POSTGRES_HOST     = module.rds.endpoint
+    POSTGRES_PORT     = tostring(module.rds.port)
+    POSTGRES_DB       = module.rds.database_name
+    POSTGRES_USER     = var.db_username
+    POSTGRES_PASSWORD = var.db_password
+  }
+
+  type = "Opaque"
+}
+
 module "jenkins" {
   source                 = "./modules/jenkins"
   cluster_name           = module.eks.cluster_name
@@ -84,6 +137,18 @@ module "argo_cd" {
   cluster_ca_certificate = module.eks.cluster_certificate_authority_data
   git_repository_url     = var.git_repository_url
   git_revision           = var.git_revision
+
+  providers = {
+    kubernetes = kubernetes
+    helm       = helm
+  }
+
+  depends_on = [module.eks, kubernetes_secret_v1.django_database]
+}
+
+module "monitoring" {
+  source                 = "./modules/monitoring"
+  grafana_admin_password = var.grafana_admin_password
 
   providers = {
     kubernetes = kubernetes

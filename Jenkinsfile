@@ -14,7 +14,7 @@ spec:
       tty: true
       volumeMounts:
         - name: aws-credentials
-          mountPath: /kaniko/.aws
+          mountPath: /root/.aws
           readOnly: true
     - name: git
       image: alpine/git:2.47.2
@@ -32,7 +32,7 @@ spec:
     environment {
         AWS_REGION = 'us-east-1'
         ECR_URL = '228266398439.dkr.ecr.us-east-1.amazonaws.com/lesson-5-ecr'
-        DEPLOY_BRANCH = 'lesson-8-9'
+        DEPLOY_BRANCH = 'final-project'
         VALUES_FILE = 'charts/django-app/values.yaml'
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
@@ -56,9 +56,7 @@ spec:
                       /kaniko/executor \
                         --context="${WORKSPACE}" \
                         --dockerfile="${WORKSPACE}/Dockerfile" \
-                        --destination="${ECR_URL}:${IMAGE_TAG}" \
-                        --cache=true \
-                        --cache-repo="${ECR_URL}-cache"
+                        --destination="${ECR_URL}:${IMAGE_TAG}"
                     '''
                 }
             }
