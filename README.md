@@ -1,10 +1,6 @@
-# Домашнє завдання: Jenkins, Argo CD, Helm і Terraform
-
-У цьому проєкті я зробила CI/CD для простого Django-застосунку.
-
 Terraform створює інфраструктуру в AWS і встановлює Jenkins та Argo CD через Helm. Jenkins збирає Docker-образ, завантажує його в Amazon ECR та змінює тег образу у `values.yaml`. Після цього Argo CD бачить зміну в GitHub і оновлює застосунок у Kubernetes.
 
-## Як це працює
+## Як працює
 
 ```text
 Зміни в GitHub
