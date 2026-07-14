@@ -11,13 +11,11 @@ service:
   targetPort: 8000
 
 config:
-  DEBUG: "True"
+  DEBUG: "False"
   ALLOWED_HOSTS: "*"
-  POSTGRES_HOST: "postgres-service"
-  POSTGRES_PORT: "5432"
-  POSTGRES_USER: "django_user"
-  POSTGRES_PASSWORD: "securepassword123"
-  POSTGRES_DB: "django_db"
+
+secretConfig:
+  DJANGO_SECRET_KEY: "replace-me-before-production"
 
 autoscaling:
   enabled: true
@@ -26,23 +24,15 @@ autoscaling:
   targetCPUUtilizationPercentage: 70
 
 resources:
-  limits:
-    cpu: 200m
-    memory: 256Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
+  limits: { cpu: 300m, memory: 256Mi }
+  requests: { cpu: 100m, memory: 128Mi }
 
 livenessProbe:
-  httpGet:
-    path: /health/
-    port: 8000
-  initialDelaySeconds: 30
+  httpGet: { path: /health/, port: 8000 }
+  initialDelaySeconds: 15
   periodSeconds: 10
 
 readinessProbe:
-  httpGet:
-    path: /health/
-    port: 8000
-  initialDelaySeconds: 15
-  periodSeconds: 10
+  httpGet: { path: /health/, port: 8000 }
+  initialDelaySeconds: 5
+  periodSeconds: 5

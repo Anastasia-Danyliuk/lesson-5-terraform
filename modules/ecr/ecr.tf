@@ -11,23 +11,18 @@ resource "aws_ecr_repository" "repo" {
   }
 }
 
-resource "aws_ecr_repository_policy" "repo_policy" {
+resource "aws_ecr_lifecycle_policy" "keep_recent" {
   repository = aws_ecr_repository.repo.name
-  policy     = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Sid    = "AllowPushPull",
-      Effect = "Allow",
-      Principal = { AWS = "*" },
-      Action = [
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:BatchGetImage",
-        "ecr:BatchCheckLayerAvailability",
-        "ecr:PutImage",
-        "ecr:InitiateLayerUpload",
-        "ecr:UploadLayerPart",
-        "ecr:CompleteLayerUpload"
-      ]
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Keep the 20 most recent images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 20
+      }
+      action = { type = "expire" }
     }]
   })
 }

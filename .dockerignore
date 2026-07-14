@@ -1,0 +1,8 @@
+.git
+.idea
+.terraform
+*.tfstate*
+__pycache__
+*.py[cod]
+.venv
+README.md

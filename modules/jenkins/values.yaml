@@ -1,5 +1,46 @@
 controller:
   serviceType: ClusterIP
-
+  installPlugins:
+    - kubernetes:latest
+    - workflow-aggregator:latest
+    - git:latest
+    - credentials-binding:latest
+    - configuration-as-code:latest
+  containerEnv:
+    - name: GITHUB_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: jenkins-cicd-credentials
+          key: github_username
+    - name: GITHUB_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: jenkins-cicd-credentials
+          key: github_token
+  JCasC:
+    defaultConfig: true
+    configScripts:
+      credentials: |
+        credentials:
+          system:
+            domainCredentials:
+              - credentials:
+                  - usernamePassword:
+                      scope: GLOBAL
+                      id: github-token
+                      username: "${GITHUB_USERNAME}"
+                      password: "${GITHUB_TOKEN}"
+                      description: "GitHub token for Helm tag updates"
   persistence:
-    enabled: false
+    enabled: true
+    size: 8Gi
+
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+
+agent:
+  enabled: true
+  podRetention: never

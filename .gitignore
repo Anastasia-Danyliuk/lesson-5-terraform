@@ -2,3 +2,9 @@
 .terraform.lock.hcl
 *.tfstate
 *.tfstate.backup
+terraform.tfvars
+*.tfplan
+.venv/
+__pycache__/
+*.py[cod]
+.helm-tmp/

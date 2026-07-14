@@ -1,3 +1,5 @@
+# Reference manifest. Terraform installs the equivalent resource through
+# modules/argo_cd/charts so no manual kubectl apply is required.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -6,13 +8,15 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/Anastasia-Danyliuk/lesson-7-Kubernetes.git'
+    repoURL: https://github.com/Anastasia-Danyliuk/lesson-5-terraform.git
     targetRevision: lesson-8-9
     path: charts/django-app
   destination:
-    server: 'https://kubernetes.default.svc'
-    namespace: default
+    server: https://kubernetes.default.svc
+    namespace: django-app
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

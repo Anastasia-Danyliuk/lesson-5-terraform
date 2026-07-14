@@ -1,0 +1,8 @@
+repository:
+  url: https://github.com/Anastasia-Danyliuk/lesson-5-terraform.git
+
+application:
+  name: django-app
+  revision: lesson-8-9
+  path: charts/django-app
+  namespace: django-app
