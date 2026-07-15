@@ -94,9 +94,10 @@ module "rds" {
   username       = var.db_username
   password       = var.db_password
 
-  vpc_id              = module.vpc.vpc_id
-  subnet_ids          = module.vpc.private_subnets
-  allowed_cidr_blocks = ["10.0.0.0/16"]
+  vpc_id      = module.vpc.vpc_id
+  subnet_ids  = module.vpc.private_subnets
+  from_port   = 5432
+  cidr_blocks = ["10.0.0.0/16"]
 
   tags = {
     Project = "lesson-db-module"

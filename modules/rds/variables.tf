@@ -120,8 +120,14 @@ variable "parameters" {
   }
 }
 
-variable "allowed_cidr_blocks" {
-  description = "Networks allowed to connect to the database."
+variable "from_port" {
+  description = "Database port used in the Security Group ingress rule."
+  type        = number
+  default     = 5432
+}
+
+variable "cidr_blocks" {
+  description = "VPC networks allowed to connect to the database."
   type        = list(string)
   default     = ["10.0.0.0/16"]
 }

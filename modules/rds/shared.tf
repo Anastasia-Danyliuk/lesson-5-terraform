@@ -10,10 +10,10 @@ resource "aws_security_group" "rds_sg" {
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port   = local.db_port
-    to_port     = local.db_port
+    from_port   = var.from_port
+    to_port     = var.from_port
     protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr_blocks
+    cidr_blocks = var.cidr_blocks
   }
 
   egress {
@@ -24,11 +24,6 @@ resource "aws_security_group" "rds_sg" {
   }
 
   tags = var.tags
-}
-
-locals {
-  selected_engine = var.use_aurora ? var.aurora_engine : var.engine
-  db_port         = contains(["mysql", "aurora-mysql"], local.selected_engine) ? 3306 : 5432
 }
 
 resource "aws_db_parameter_group" "rds_pg" {
