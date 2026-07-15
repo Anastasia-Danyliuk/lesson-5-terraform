@@ -13,18 +13,40 @@ spec:
       args: [cat]
       tty: true
       volumeMounts:
-        - name: aws-credentials
-          mountPath: /kaniko/.aws
-          readOnly: true
+        - name: docker-config
+          mountPath: /kaniko/.docker
+    - name: awscli
+      image: amazon/aws-cli:latest
+      command: [sh, -c]
+      args: [cat]
+      tty: true
+      env:
+        - name: AWS_REGION
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: region
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: aws_access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: aws_secret_access_key
+      volumeMounts:
+        - name: docker-config
+          mountPath: /tmp/docker
     - name: git
       image: alpine/git:2.47.2
       command: [sh, -c]
       args: [cat]
       tty: true
   volumes:
-    - name: aws-credentials
-      secret:
-        secretName: aws-credentials
+    - name: docker-config
+      emptyDir: {}
 '''
         }
     }
@@ -46,6 +68,19 @@ spec:
         stage('Verify') {
             steps {
                 sh 'test -f manage.py && test -f Dockerfile && test -f ${VALUES_FILE}'
+            }
+        }
+
+        stage('ECR login') {
+            steps {
+                container('awscli') {
+                    sh '''
+                      ECR_PASSWORD="$(aws ecr get-login-password --region "${AWS_REGION}")"
+                      ECR_AUTH="$(printf 'AWS:%s' "${ECR_PASSWORD}" | base64 | tr -d '\\n')"
+                      printf '{"auths":{"%s":{"auth":"%s"}}}' \
+                        "${ECR_URL%/*}" "${ECR_AUTH}" > /tmp/docker/config.json
+                    '''
+                }
             }
         }
 
@@ -87,6 +122,7 @@ spec:
     }
 
     post {
+        always { cleanWs() }
         success { echo "Published ${ECR_URL}:${IMAGE_TAG}; Argo CD will synchronize it." }
         failure { echo 'Pipeline failed. Check the failed stage and pod logs.' }
     }

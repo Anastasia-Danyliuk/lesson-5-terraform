@@ -64,6 +64,7 @@ module "jenkins" {
   cluster_name           = module.eks.cluster_name
   cluster_endpoint       = module.eks.cluster_endpoint
   cluster_ca_certificate = module.eks.cluster_certificate_authority_data
+  aws_region             = var.aws_region
   aws_access_key_id      = var.jenkins_aws_access_key_id
   aws_secret_access_key  = var.jenkins_aws_secret_access_key
   github_username        = var.github_username
