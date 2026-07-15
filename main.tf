@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 data "aws_eks_cluster_auth" "cluster" {
@@ -45,9 +45,9 @@ module "vpc" {
 }
 
 module "ecr" {
-   source          = "./modules/ecr"
-   repository_name = "lesson-5-ecr"
-   scan_on_push = true
+  source          = "./modules/ecr"
+  repository_name = "lesson-5-ecr"
+  scan_on_push    = true
 }
 
 module "eks" {
@@ -84,16 +84,21 @@ module "argo_cd" {
 # }
 
 module "rds" {
-  source         = "./modules/rds"
+  source = "./modules/rds"
 
-  use_aurora     = false
-  engine         = "postgres"
-  instance_class = "db.t3.micro"
+  name           = "lesson-db"
+  use_aurora     = var.use_aurora
+  engine         = var.db_engine
+  instance_class = var.db_instance_class
+  db_name        = var.db_name
+  username       = var.db_username
+  password       = var.db_password
 
-  db_name        = "mydatabase"
-  username       = "postgresuser"
-  password       = "supersecretpassword"
+  vpc_id              = module.vpc.vpc_id
+  subnet_ids          = module.vpc.private_subnets
+  allowed_cidr_blocks = ["10.0.0.0/16"]
 
-  vpc_id         = module.vpc.vpc_id
-  subnet_ids     = module.vpc.private_subnets
+  tags = {
+    Project = "lesson-db-module"
+  }
 }

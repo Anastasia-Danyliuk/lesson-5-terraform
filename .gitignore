@@ -2,3 +2,11 @@
 .terraform.lock.hcl
 *.tfstate
 *.tfstate.backup
+terraform.tfvars
+*.tfplan
+.aws-local/
+.kube-local/
+.terraform-tmp/
+.helm-tmp/
+.helm-final-check/
+__pycache__/

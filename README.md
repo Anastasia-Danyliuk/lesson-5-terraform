@@ -1,90 +1,84 @@
-##  Структура проєкту
-```text
-lesson-5-terraform/
-│
-├── main.tf                  # Головний файл для підключення модулів
-├── backend.tf               # Налаштування бекенду для стейтів (S3 + DynamoDB
-├── outputs.tf               # Загальні виводи ресурсів
-│
-├── modules/                 # Каталог з усіма модулями
-│   ├── s3-backend/          # Модуль для S3 та DynamoDB
-│   │   ├── s3.tf            # Створення S3-бакета
-│   │   ├── dynamodb.tf      # Створення DynamoDB
-│   │   ├── variables.tf     # Змінні для S3
-│   │   └── outputs.tf       # Виведення інформації про S3 та DynamoDB
-│   │
-│   ├── vpc/                 # Модуль для VPC
-│   │   ├── vpc.tf           # Створення VPC, підмереж, Internet Gateway
-│   │   ├── routes.tf        # Налаштування маршрутизації
-│   │   ├── variables.tf     # Змінні для VPC
-│   │   └── outputs.tf  
-│   ├── ecr/                 # Модуль для ECR
-│   │   ├── ecr.tf           # Створення ECR репозиторію
-│   │   ├── variables.tf     # Змінні для ECR
-│   │   └── outputs.tf       # Виведення URL репозиторію
-│   │
-│   ├── eks/                      # Модуль для Kubernetes кластера
-│   │   ├── eks.tf                # Створення кластера
-│   │   ├── aws_ebs_csi_driver.tf # Встановлення плагіну csi drive
-│   │   ├── variables.tf     # Змінні для EKS
-│   │   └── outputs.tf       # Виведення інформації про кластер
-│   │
-│   ├── jenkins/             # Модуль для Helm-установки Jenkins
-│   │   ├── jenkins.tf       # Helm release для Jenkins
-│   │   ├── variables.tf     # Змінні (ресурси, креденшели, values)
-│   │   ├── providers.tf     # Оголошення провайдерів
-│   │   ├── values.yaml      # Конфігурація jenkins
-│   │   └── outputs.tf       # Виводи (URL, пароль адміністратора)
-│   │ 
-│   └── argo_cd/             # Новий модуль для Helm-установки Argo CD
-│       ├── jenkins.tf       # Helm release для Jenkins
-│       ├── variables.tf     # Змінні (версія чарта, namespace, repo URL тощо)
-│       ├── providers.tf     # Kubernetes+Helm.  переносимо з модуля jenkins
-│       ├── values.yaml      # Кастомна конфігурація Argo CD
-│       ├── outputs.tf       # Виводи (hostname, initial admin password)
-│		    └──charts/                  # Helm-чарт для створення app'ів
-│ 	 	    ├── Chart.yaml
-│	  	    ├── values.yaml          # Список applications, repositories
-│			    └── templates/
-│		        ├── application.yaml
-│		        └── repository.yaml
-├── charts/
-│   └── django-app/
-│       ├── templates/
-│       │   ├── deployment.yaml
-│       │   ├── service.yaml
-│       │   ├── configmap.yaml
-│       │   └── hpa.yaml
-│       ├── Chart.yaml
-│       └── values.yaml     # ConfigMap зі змінними середовища
+# Terraform-модуль для бази даних
 
+Це домашнє завдання з Terraform. Модуль `modules/rds` може створити звичайну RDS базу або Aurora.
 
+## Як вибрати базу
+
+- `use_aurora = false` — створюється одна звичайна RDS база.
+- `use_aurora = true` — створюється Aurora cluster та його instance.
+
+Приклад підключення модуля:
+
+```hcl
+module "rds" {
+  source = "./modules/rds"
+
+  name           = "lesson-db"
+  use_aurora     = var.use_aurora
+  engine         = var.db_engine
+  instance_class = var.db_instance_class
+  db_name        = var.db_name
+  username       = var.db_username
+  password       = var.db_password
+
+  vpc_id             = module.vpc.vpc_id
+  subnet_ids          = module.vpc.private_subnets
+  allowed_cidr_blocks = ["10.0.0.0/16"]
+}
 ```
-## Інструкція з розгортання та запуску команд
-Ініціалізація проєкту, перевірка плану та створення всіх ресурсів:
+
+Модуль сам створює DB Subnet Group, Security Group і Parameter Group.
+
+## Основні змінні
+
+| Змінна | Для чого потрібна | Значення за замовчуванням |
+|---|---|---|
+| `use_aurora` | Вибір між RDS та Aurora | `false` |
+| `engine` | Тип звичайної RDS: `postgres` або `mysql` | `postgres` |
+| `engine_version` | Версія звичайної RDS | `14` |
+| `aurora_engine` | Тип Aurora | `aurora-postgresql` |
+| `aurora_engine_version` | Версія Aurora | `14` |
+| `instance_class` | Клас instance | `db.t3.micro` |
+| `allocated_storage` | Розмір диска звичайної RDS | `20` GB |
+| `db_name` | Назва бази | `mydb` |
+| `username` | Логін адміністратора | задається користувачем |
+| `password` | Пароль адміністратора | задається у `terraform.tfvars` |
+| `multi_az` | Резервна RDS в іншій зоні | `false` |
+| `aurora_instance_count` | Кількість Aurora instance | `1` |
+| `parameters` | Параметри Parameter Group | PostgreSQL-параметри з прикладу |
+| `name` | Назва ресурсів бази | `lesson-db` |
+| `subnet_ids` | Підмережі для DB Subnet Group | задаються користувачем |
+| `vpc_id` | VPC для Security Group | задається користувачем |
+| `allowed_cidr_blocks` | Мережі, яким дозволено доступ | `10.0.0.0/16` |
+| `publicly_accessible` | Чи має RDS публічну адресу | `false` |
+| `backup_retention_period` | Скільки днів зберігати backup | `7` |
+| `rds_parameter_group_family` | Family для RDS Parameter Group | `postgres14` |
+| `aurora_parameter_group_family` | Family для Aurora Parameter Group | `aurora-postgresql14` |
+| `tags` | Додаткові теги AWS | порожня map |
+
+## Як змінити налаштування
+
+Скопіюйте `terraform.tfvars.example` у `terraform.tfvars` і замініть пароль. Файл `terraform.tfvars` не додається в Git.
+
+Для Aurora змініть:
+
+```hcl
+use_aurora = true
+```
+
+Для MySQL змініть `engine`, версію, family Parameter Group і параметри на сумісні з MySQL.
+
+## Перевірка
 
 ```bash
 terraform init
+terraform fmt -check -recursive
+terraform validate
 terraform plan
-terraform apply -auto-approve
 ```
-### Після завершення роботи обов'язково
+
+Після перевірки створені ресурси потрібно видалити:
+
 ```bash
 terraform destroy
 ```
-
-## Як перевірити Jenkins job
-Після terraform apply отримайте URL Jenkins із виводів (outputs).
-Увійдіть у систему за допомогою логіну/паролю.
-Створіть Pipeline, вказавши шлях до Jenkinsfile у репозиторії.
-Після запуску Pipeline автоматично:
-Збере Docker-образ;
-Пушне його в ECR;
-Оновить тег у values.yaml чарта;
-Зафіксує зміни у Git.
-
-##  Як побачити результат в Argo CD
-Argo CD постійно стежить за змінами у вказаному репозиторії.
-Після того, як Jenkins оновив тег у values.yaml, Argo CD змінить статус програми на OutOfSync.
-Синхронізація відбудеться автоматично і нова версія Django-застосунку буде розгорнута в кластері EKS.
-Можна переглянути статус застосунку в UI панелі Argo CD.

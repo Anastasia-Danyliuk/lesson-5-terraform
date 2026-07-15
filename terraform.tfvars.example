@@ -1,0 +1,6 @@
+use_aurora       = false
+db_engine        = "postgres"
+db_instance_class = "db.t3.micro"
+db_name          = "mydatabase"
+db_username      = "postgresuser"
+db_password      = "CHANGE_ME"

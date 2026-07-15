@@ -13,3 +13,8 @@ output "vpc_id" {
 output "ecr_url" {
   value = module.ecr.repository_url
 }
+
+output "db_endpoint" {
+  description = "Address of the created RDS or Aurora database."
+  value       = module.rds.db_endpoint
+}
