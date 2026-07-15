@@ -1,6 +1,6 @@
 # Фінальний DevOps-проєкт на AWS
 
-Це мій фінальний навчальний проєкт. У ньому я зібрала інфраструктуру AWS за допомогою Terraform і налаштувала простий CI/CD для Django-застосунку.
+Інфраструктура проекту AWS зібрано за допомогою Terraform і налаштовано простий CI/CD для Django-застосунку
 
 ## Що є у проєкті
 
@@ -15,12 +15,12 @@
 - HPA для автомасштабування Django pods;
 - S3 і DynamoDB для Terraform state.
 
-Я вибрала звичайний PostgreSQL RDS, а не Aurora, тому що для навчального проєкту він простіший і дешевший.
+Було обрано PostgreSQL RDS, замість Aurora, тому він простіший і дешевший
 
 ## Як працює CI/CD
 
 ```text
-Я пушу зміни в GitHub
+Пушимо зміни в GitHub
           ↓
 Jenkins запускає Jenkinsfile
           ↓
@@ -50,7 +50,7 @@ bootstrap            - S3 і DynamoDB для Terraform state
 config               - простий Django-застосунок
 ```
 
-## Що потрібно перед запуском
+## Перед запуском
 
 Потрібно встановити:
 
@@ -66,32 +66,18 @@ config               - простий Django-застосунок
 aws configure
 ```
 
-## 1. Створення гілки для здачі
+## Створення backend
 
-Фінальний проєкт потрібно здавати у гілці `final-project`:
-
-```bash
-git switch -c final-project
-```
-
-Якщо гілка вже існує:
-
-```bash
-git switch final-project
-```
-
-## 2. Створення backend
-
-S3 і DynamoDB створюються окремо, тому що вони зберігають Terraform state:
+S3 і DynamoDB створюються окремо:
 
 ```bash
 terraform -chdir=bootstrap init
 terraform -chdir=bootstrap apply
 ```
 
-## 3. Налаштування змінних
+## Налаштування змінних
 
-Створюю локальний файл зі змінними:
+Створюємо локальний файл зі змінними:
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars
@@ -105,9 +91,7 @@ cp terraform.tfvars.example terraform.tfvars
 - Django secret key;
 - пароль Grafana.
 
-Файл `terraform.tfvars` не потрапляє в GitHub, бо він доданий у `.gitignore`.
-
-## 4. Перевірка і запуск Terraform
+## Перевірка і запуск Terraform
 
 ```bash
 terraform init -reconfigure
@@ -116,17 +100,14 @@ terraform validate
 terraform plan
 terraform apply
 ```
-
-Створення EKS і RDS може зайняти приблизно 15–30 хвилин.
-
-Після створення кластера підключаю kubectl:
+Після створення кластера :
 
 ```bash
 aws eks update-kubeconfig --region us-east-1 --name final-project-eks-cluster
 kubectl get nodes
 ```
 
-## 5. Перевірка всіх компонентів
+## Перевірка всіх компонентів
 
 ```bash
 kubectl get all -n jenkins
@@ -135,21 +116,15 @@ kubectl get all -n monitoring
 kubectl get all -n django-app
 ```
 
-Також можна перевірити RDS:
+## Перевірка Jenkins
 
-```bash
-terraform output rds_endpoint
-```
-
-## 6. Перевірка Jenkins
-
-Отримую пароль Jenkins:
+Отримуємо пароль Jenkins:
 
 ```bash
 kubectl get secret -n jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode
 ```
 
-Відкриваю Jenkins через port-forward:
+Відкриваємо Jenkins через port-forward:
 
 ```bash
 kubectl port-forward svc/jenkins 8080:8080 -n jenkins
@@ -167,7 +142,7 @@ kubectl port-forward svc/jenkins 8080:8080 -n jenkins
 
 Після **Build Now** Jenkins повинен зібрати образ, відправити його в ECR і змінити тег у `charts/django-app/values.yaml`.
 
-## 7. Перевірка Argo CD
+## Перевірка Argo CD
 
 ```bash
 kubectl port-forward svc/argocd-server 8081:443 -n argocd
@@ -183,8 +158,6 @@ kubectl port-forward svc/argocd-server 8081:443 -n argocd
 kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode
 ```
 
-Застосунок `django-app` повинен мати статуси **Synced** і **Healthy**.
-
 Перевірка через kubectl:
 
 ```bash
@@ -196,9 +169,9 @@ kubectl get hpa -n django-app
 
 Endpoint `/health/` перевіряє Django, а `/ready/` також перевіряє підключення до RDS.
 
-## 8. Перевірка Grafana і Prometheus
+## Перевірка Grafana і Prometheus
 
-Відкриваю Grafana:
+Відкриваємо Grafana:
 
 ```bash
 kubectl port-forward svc/grafana 3000:80 -n monitoring
@@ -227,28 +200,11 @@ helm template django-app charts/django-app
 
 Локальний Django буде доступний за адресою `http://localhost:8000`.
 
-## Як запушити фінальний проєкт
-
-```bash
-git add .
-git commit -m "Final DevOps project"
-git push -u origin final-project
-```
-
-Для здачі потрібно дати посилання саме на гілку `final-project` і зробити zip-архів з назвою `final_DevOps_ПІБ.zip`.
-
 ## Видалення ресурсів
-
-AWS-ресурси можуть коштувати гроші. Після перевірки спочатку видаляю основну інфраструктуру:
 
 ```bash
 terraform destroy
 ```
-
-І тільки після цього видаляю backend:
-
 ```bash
 terraform -chdir=bootstrap destroy
 ```
-
-S3 і DynamoDB потрібно видаляти останніми, тому що там зберігається Terraform state.
