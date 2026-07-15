@@ -67,13 +67,13 @@ use_aurora = false
 use_aurora = true
 ```
 
-Для зміни типу звичайної бази змініть `engine`, наприклад:
+Для зміни типу звичайної бази змініть `engine`:
 
 ```hcl
 engine = "mysql"
 ```
 
-Для зміни Aurora змініть `aurora_engine`, наприклад:
+Для зміни Aurora змініть `aurora_engine`:
 
 ```hcl
 aurora_engine = "aurora-mysql"
@@ -95,4 +95,4 @@ instance_class = "db.t3.small"
 db_password = "CHANGE_ME"
 ```
 
-Файл `terraform.tfvars` не потрібно додавати в Git.
+
