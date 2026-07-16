@@ -205,6 +205,4 @@ helm template django-app charts/django-app
 ```bash
 terraform destroy
 ```
-```bash
-terraform -chdir=bootstrap destroy
-```
+
