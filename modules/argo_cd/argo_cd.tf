@@ -27,3 +27,12 @@ resource "helm_release" "applications" {
 
   depends_on = [helm_release.argocd]
 }
+
+data "kubernetes_service_v1" "argocd_server" {
+  metadata {
+    name      = "argocd-server"
+    namespace = kubernetes_namespace_v1.argocd.metadata[0].name
+  }
+
+  depends_on = [helm_release.argocd]
+}

@@ -1,11 +1,19 @@
 controller:
-  serviceType: ClusterIP
+  serviceType: LoadBalancer
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 2048Mi
   installPlugins:
     - kubernetes:latest
     - workflow-aggregator:latest
     - git:latest
     - credentials-binding:latest
     - configuration-as-code:latest
+    - ws-cleanup:latest
   containerEnv:
     - name: GITHUB_USERNAME
       valueFrom:
@@ -44,3 +52,10 @@ serviceAccount:
 agent:
   enabled: true
   podRetention: never
+  resources:
+    requests:
+      cpu: 500m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi

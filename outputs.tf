@@ -18,6 +18,14 @@ output "argocd_namespace" {
   value = module.argo_cd.argocd_namespace
 }
 
+output "argocd_server_url" {
+  value = module.argo_cd.argocd_server_url
+}
+
+output "argocd_admin_password_command" {
+  value = module.argo_cd.argocd_admin_password_command
+}
+
 output "rds_endpoint" {
   value     = module.rds.endpoint
   sensitive = true

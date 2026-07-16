@@ -12,6 +12,10 @@ variable "aws_secret_access_key" {
   sensitive = true
 }
 
+variable "aws_region" {
+  type = string
+}
+
 variable "github_username" { type = string }
 
 variable "github_token" {

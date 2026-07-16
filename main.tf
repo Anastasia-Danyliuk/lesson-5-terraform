@@ -119,6 +119,7 @@ module "jenkins" {
   cluster_ca_certificate = module.eks.cluster_certificate_authority_data
   aws_access_key_id      = var.jenkins_aws_access_key_id
   aws_secret_access_key  = var.jenkins_aws_secret_access_key
+  aws_region             = var.aws_region
   github_username        = var.github_username
   github_token           = var.github_token
 
