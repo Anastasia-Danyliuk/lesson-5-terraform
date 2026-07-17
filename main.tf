@@ -79,13 +79,25 @@ resource "kubernetes_storage_class_v1" "ebs_gp3" {
 }
 
 module "rds" {
-  source       = "./modules/rds"
-  vpc_id       = module.vpc.vpc_id
-  subnet_ids   = module.vpc.private_subnets
-  allowed_cidr = "10.0.0.0/16"
-  db_name      = var.db_name
-  db_username  = var.db_username
-  db_password  = var.db_password
+  source = "./modules/rds"
+
+  name                       = "final-project-postgres"
+  use_aurora                 = false
+  engine                     = "postgres"
+  engine_version             = "16.4"
+  instance_class             = "db.t3.micro"
+  db_name                    = var.db_name
+  username                   = var.db_username
+  password                   = var.db_password
+  vpc_id                     = module.vpc.vpc_id
+  subnet_ids                 = module.vpc.private_subnets
+  from_port                  = 5432
+  cidr_blocks                = ["10.0.0.0/16"]
+  rds_parameter_group_family = "postgres16"
+
+  tags = {
+    Project = "final-project"
+  }
 }
 
 resource "kubernetes_namespace_v1" "django_app" {
