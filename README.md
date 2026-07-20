@@ -198,6 +198,8 @@ helm lint charts/django-app
 helm template django-app charts/django-app
 ```
 
+
+
 Локальний Django буде доступний за адресою `http://localhost:8000`.
 
 ## Видалення ресурсів
@@ -206,3 +208,4 @@ helm template django-app charts/django-app
 terraform destroy
 ```
 
+<img width="1041" height="217" alt="screen1" src="https://github.com/user-attachments/assets/e61a3fc8-b497-4534-89ae-1f83c74c26c4" />
