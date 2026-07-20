@@ -94,6 +94,7 @@ module "rds" {
   from_port                  = 5432
   cidr_blocks                = ["10.0.0.0/16"]
   rds_parameter_group_family = "postgres16"
+  backup_retention_period    = 1
 
   tags = {
     Project = "final-project"

@@ -18,3 +18,17 @@ resource "helm_release" "monitoring" {
     value = var.grafana_admin_password
   }]
 }
+
+resource "helm_release" "metrics_server" {
+  name       = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart      = "metrics-server"
+  version    = "3.13.1"
+  namespace  = "kube-system"
+  timeout    = 600
+  wait       = true
+
+  values = [yamlencode({
+    args = ["--kubelet-insecure-tls"]
+  })]
+}

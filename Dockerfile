@@ -12,7 +12,8 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-COPY --chown=django:django . .
+COPY --chown=django:django manage.py ./
+COPY --chown=django:django config ./config
 
 USER django
 EXPOSE 8000
