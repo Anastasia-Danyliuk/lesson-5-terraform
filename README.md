@@ -209,3 +209,13 @@ terraform destroy
 ```
 
 <img width="1041" height="217" alt="screen1" src="https://github.com/user-attachments/assets/e61a3fc8-b497-4534-89ae-1f83c74c26c4" />
+
+<img width="1280" height="175" alt="01" src="https://github.com/user-attachments/assets/1540541a-de23-4ade-b94b-5325446b2b06" />
+
+<img width="1280" height="485" alt="02" src="https://github.com/user-attachments/assets/e5db77c6-f347-46b2-a0f1-baf14e398d5a" />
+
+<img width="1280" height="642" alt="03" src="https://github.com/user-attachments/assets/6ca64d1d-9061-4c42-b2f5-09d58b225ff3" />
+
+<img width="1280" height="326" alt="04" src="https://github.com/user-attachments/assets/e304c88a-54be-415a-8592-d4928a614432" />
+
+<img width="1280" height="139" alt="05" src="https://github.com/user-attachments/assets/e5674876-374d-4308-b950-ba703998a9a5" />
